@@ -2,7 +2,13 @@ import { Heart } from 'lucide-react';
 
 const TopBar = ({ savedCount }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 glass border-b border-gray-200 z-20 safe-area-inset-top">
+    <div 
+      className="fixed top-0 left-0 right-0 glass border-b border-gray-200 z-20"
+      style={{
+        /* Add safe area inset padding for devices with notches */
+        paddingTop: 'env(safe-area-inset-top, 0px)'
+      }}
+    >
       <div className="flex items-center justify-between px-4 h-16">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-black text-orange-500">Vista</h1>

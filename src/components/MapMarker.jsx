@@ -22,6 +22,7 @@ const MapMarker = ({ place, onClick, isSelected }) => {
       initial={{ scale: 0 }}
       animate={{ scale: isSelected ? 1.2 : 1 }}
       whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       onClick={(e) => {
         e.stopPropagation();

@@ -9,7 +9,13 @@ const BottomNav = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass border-t border-gray-200 z-30 safe-area-inset-bottom">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 glass border-t border-gray-200 z-30"
+      style={{
+        /* Add safe area inset padding for devices with notches/home indicators */
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+      }}
+    >
       <div className="flex justify-around items-center h-16 px-2">
         {tabs.map(({ id, icon: Icon, label }) => (
           <button

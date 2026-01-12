@@ -33,8 +33,8 @@ function App() {
         return <MapView savedPlaces={savedPlaces} />;
       case 'favorites':
         return (
-          <div className="h-full overflow-y-auto pb-20 pt-20">
-            <div className="p-6">
+          <div className="h-full overflow-y-auto min-h-0 flex flex-col">
+            <div className="p-6 flex-1">
               <h2 className="text-2xl font-black mb-6 text-gray-800">מועדפים</h2>
               {savedPlaces.length === 0 ? (
                 <div className="text-center py-12">
@@ -93,9 +93,25 @@ function App() {
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-gray-50 flex flex-col" dir="rtl">
+    <div 
+      className="w-full overflow-hidden bg-gray-50 flex flex-col" 
+      dir="rtl"
+      style={{
+        /* Use 100dvh (dynamic viewport height) to account for mobile address bar */
+        /* Falls back to 100vh in CSS for browsers that don't support dvh */
+        minHeight: '100dvh',
+      }}
+    >
       <TopBar savedCount={savedPlaces.length} />
-      <div className="flex-1 overflow-hidden flex flex-col" style={{ paddingTop: '64px', paddingBottom: '64px' }}>
+      <div 
+        className="flex-1 overflow-hidden flex flex-col min-h-0" 
+        style={{ 
+          /* Padding accounts for fixed top nav + safe area */
+          paddingTop: 'calc(var(--top-nav-height) + env(safe-area-inset-top, 0px))',
+          /* Padding accounts for fixed bottom nav + safe area to prevent overlap */
+          paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))'
+        }}
+      >
         {renderContent()}
       </div>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />

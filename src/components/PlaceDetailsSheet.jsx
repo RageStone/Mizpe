@@ -113,8 +113,10 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     if (currentY > threshold || velocity.y > 500) {
       setIsDragging(false);
       // Animate to bottom and close
+      // Use window.innerHeight (or dvh) for reliable mobile behavior
+      const sheetHeight = window.innerHeight || document.documentElement.clientHeight;
       await controls.start({
-        y: window.innerHeight,
+        y: sheetHeight,
         transition: { type: 'spring', damping: 30, stiffness: 300 }
       });
       onClose();
@@ -156,12 +158,20 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
           {/* Sheet */}
           <motion.div
             key="sheet"
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[1050] max-h-[90vh] overflow-hidden flex flex-col"
+            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[1050] overflow-hidden flex flex-col"
+            style={{
+              /* Use 90dvh for mobile address bar compatibility */
+              /* Falls back to 90vh in CSS for browsers that don't support dvh */
+              maxHeight: '90dvh',
+              /* Add safe area inset for devices with notches */
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              /* Motion value for drag position - only applied when dragging */
+              ...(isDragging && { y })
+            }}
             initial={{ y: '100%' }}
             animate={isDragging ? undefined : { y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            style={isDragging ? { y } : undefined}
             drag={isAtTop ? "y" : false}
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}

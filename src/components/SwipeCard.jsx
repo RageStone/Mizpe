@@ -319,6 +319,8 @@ const SwipeCard = ({ place, index, onSwipe, onSwipeUp, topCardX, onTopCardXChang
         )}
 
         {/* Content */}
+        {/* Bottom padding ensures content (tags/name) ends above action buttons */}
+        {/* Increased padding to prevent overlap with action buttons below */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
           {/* Quick Action Icons */}
           <div className="flex gap-3 mb-4">

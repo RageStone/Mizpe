@@ -155,15 +155,15 @@ const MapView = ({ savedPlaces }) => {
   }
 
   return (
-    <div className="relative w-full h-full" dir="rtl">
-      {/* Map Container */}
+    <div className="relative w-full flex-1 min-h-0" dir="rtl">
+      {/* Map Container - must fill parent container */}
       <Map
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
         onClick={handleMapClick}
         mapStyle={MAP_CONFIG.mapStyle}
         mapboxAccessToken={MAP_CONFIG.accessToken}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
         minZoom={MAP_CONFIG.minZoom}
         maxZoom={MAP_CONFIG.maxZoom}
         attributionControl={false}

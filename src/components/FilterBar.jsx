@@ -11,7 +11,7 @@ const FILTERS = [
 
 const FilterBar = ({ activeFilter, onFilterChange }) => {
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide pb-2" dir="rtl">
+    <div className="w-full overflow-x-auto scrollbar-hide pb-2 pt-2" dir="rtl">
       <div className="flex gap-2 px-4">
         {FILTERS.map((filter) => (
           <button

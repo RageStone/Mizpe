@@ -62,9 +62,12 @@ const SwipeDiscovery = ({ onSave, savedPlaces, activeFilter }) => {
   const visibleCards = places.slice(currentIndex, currentIndex + 3);
 
   return (
-    <div className="relative w-full flex-1 overflow-hidden flex flex-col">
+    <div className="relative w-full flex-1 overflow-hidden flex flex-col min-h-0" style={{ paddingBottom: '8rem' }}>
       {/* Card Container - positioned above arrows */}
-      <div className="relative w-[95%] mx-auto flex-1 pb-40" style={{ marginTop: '70px', marginBottom: '50px'}}>
+      {/* Use flexible spacing instead of fixed margins to prevent cramping on mobile */}
+      {/* Top padding accounts for FilterBar height + spacing (original was ~70px) */}
+      {/* Container ends above action buttons - paddingBottom on parent ensures cards don't overlap buttons */}
+      <div className="relative w-[95%] mx-auto flex-1 min-h-0 flex flex-col" style={{ paddingTop: '4.5rem' }}>
         {visibleCards.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-600">טוען...</p>
@@ -105,9 +108,19 @@ const SwipeDiscovery = ({ onSave, savedPlaces, activeFilter }) => {
         )}
       </div>
 
-      {/* Action Buttons - pushed down, not overlapping */}
+      {/* Action Buttons - positioned above bottom nav with safe area */}
+      {/* Buttons positioned lower to avoid overlapping card content */}
+      {/* POSITION SET HERE: The 'bottom' value controls distance from bottom nav */}
+      {/* Reducing this value moves buttons closer to bottom nav (down on screen) */}
       {currentIndex < places.length && (
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-6 px-6 z-10">
+        <div 
+          className="absolute left-0 right-0 flex justify-center gap-6 px-6 z-10"
+          style={{ 
+            bottom: 'calc(var(--bottom-nav-height) - 1rem)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+           
+          }}
+        >
           <button
             onClick={() => handleSwipe('left')}
             className="btn-icon"

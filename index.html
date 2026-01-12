@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,7 +13,10 @@
         margin: 0;
         padding: 0;
         width: 100%;
+        /* Use 100dvh (dynamic viewport height) to account for mobile address bar */
+        /* Falls back to 100vh for browsers that don't support dvh */
         height: 100vh;
+        height: 100dvh;
         overflow: hidden;
       }
       #root {
