@@ -6,15 +6,15 @@ import { X, Navigation, MapPin, ThermometerSun, Cloud, Sun, CloudRain, AlertCirc
 const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-  const [portalRoot, setPortalRoot] = useState(null);
+  const [mounted, setMounted] = useState(false);
   const y = useMotionValue(0);
   const controls = useAnimation();
   const scrollContainerRef = useRef(null);
   
+  // SSR/Hydration fix: Only set mounted state on client side
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      setPortalRoot(document.body);
-    }
+    setMounted(true);
+    return () => setMounted(false);
   }, []);
   // Reset y when sheet opens
   useEffect(() => {
@@ -34,7 +34,8 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     }
   };
   
-  if (!place) return null;
+  // Early return: Don't render on server side or without place data
+  if (!mounted || !place) return null;
 
   const getWeatherRecommendation = (temp) => {
     if (temp > 32) return { status: 'לא מומלץ', color: 'bg-red-500', icon: ThermometerSun };
@@ -128,26 +129,27 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
   };
 
   const sheet = (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/50 z-[1040]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
           />
 
           {/* Sheet */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 max-h-[90vh] overflow-hidden flex flex-col"
+            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[1050] max-h-[90vh] overflow-hidden flex flex-col"
             initial={{ y: '100%' }}
             animate={isDragging ? undefined : controls}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            style={{ y: isDragging ? y : undefined }}
+            style={isDragging ? { y } : undefined}
             drag={isAtTop ? "y" : false}
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
@@ -320,9 +322,8 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
-  if (!portalRoot) return null;
 
-  return createPortal(sheet, portalRoot);
+  return createPortal(sheet, document.body);
 };
 
 export default PlaceDetailsSheet;
