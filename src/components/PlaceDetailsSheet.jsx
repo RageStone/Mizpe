@@ -1,14 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
 import { X, Navigation, MapPin, ThermometerSun, Cloud, Sun, CloudRain, AlertCircle, Clock } from 'lucide-react';
 
 const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+  const [portalRoot, setPortalRoot] = useState(null);
   const y = useMotionValue(0);
   const controls = useAnimation();
   const scrollContainerRef = useRef(null);
   
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setPortalRoot(document.body);
+    }
+  }, []);
   // Reset y when sheet opens
   useEffect(() => {
     if (isOpen) {
@@ -120,7 +127,7 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     }
   };
 
-  return (
+  const sheet = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -313,6 +320,9 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+  if (!portalRoot) return null;
+
+  return createPortal(sheet, portalRoot);
 };
 
 export default PlaceDetailsSheet;
