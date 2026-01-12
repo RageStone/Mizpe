@@ -3,6 +3,7 @@ import TopBar from './components/TopBar';
 import BottomNav from './components/BottomNav';
 import FilterBar from './components/FilterBar';
 import SwipeDiscovery from './components/SwipeDiscovery';
+import MapView from './components/MapView';
 
 function App() {
   const [activeTab, setActiveTab] = useState('discovery');
@@ -29,13 +30,7 @@ function App() {
           </>
         );
       case 'map':
-        return (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <div className="text-center">
-              <p className="text-gray-600 text-lg">מפה - בקרוב</p>
-            </div>
-          </div>
-        );
+        return <MapView savedPlaces={savedPlaces} />;
       case 'favorites':
         return (
           <div className="h-full overflow-y-auto pb-20 pt-20">

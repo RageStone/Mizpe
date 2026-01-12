@@ -6,6 +6,13 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  optimizeDeps: {
+    include: ['mapbox-gl'],
+    exclude: ['@mapbox/mapbox-gl-draw']
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
   }
 })
 

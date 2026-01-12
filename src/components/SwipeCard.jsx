@@ -221,7 +221,7 @@ const SwipeCard = ({ place, index, onSwipe, onSwipeUp, topCardX, onTopCardXChang
     <motion.div
       className="absolute w-full h-full"
       style={{ 
-        minHeight: '500px',
+       
         // For top card: use raw x during drag, spring for snap-back when not animating
         // For cards underneath: no x movement
         x: index === 0 ? (isDragging ? x : (isSnappingBack || isExiting ? undefined : xSpring)) : 0,
