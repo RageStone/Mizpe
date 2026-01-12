@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { Heart, Info, X } from 'lucide-react';
 import SwipeCard from './SwipeCard';
 import PlaceDetailsSheet from './PlaceDetailsSheet';
@@ -25,11 +25,15 @@ const SwipeDiscovery = ({ onSave, savedPlaces, activeFilter }) => {
     // Left swipe = skip (do nothing)
 
     setDirection(direction === 'right' ? 1 : -1);
-    // Reset top card position for next card
-    topCardX.set(0);
     // Wait for exit animation to complete before moving to next card
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1);
+      // Reset topCardX AFTER the card becomes index 0
+      // The card at index 0 doesn't react to topCardX, so resetting it won't cause lag
+      // But we wait a bit to ensure the card has rendered as index 0 first
+      setTimeout(() => {
+        topCardX.set(0); // Instant reset is fine since index 0 cards ignore topCardX
+      }, 100); // Give time for the card to become index 0 and start its transition
     }, 350); // Match exit animation duration (300ms) + small buffer
   };
 
@@ -60,7 +64,7 @@ const SwipeDiscovery = ({ onSave, savedPlaces, activeFilter }) => {
   return (
     <div className="relative w-full flex-1 overflow-hidden flex flex-col">
       {/* Card Container - positioned above arrows */}
-      <div className="relative w-[95%] mx-auto flex-1 pb-40" style={{ minHeight: '500px', marginTop: '70px', marginBottom: '50px'}}>
+      <div className="relative w-[95%] mx-auto flex-1 pb-40" style={{ marginTop: '70px', marginBottom: '50px'}}>
         {visibleCards.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-600">טוען...</p>

@@ -1,7 +1,32 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
 import { X, Navigation, MapPin, ThermometerSun, Cloud, Sun, CloudRain, AlertCircle, Clock } from 'lucide-react';
 
 const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const y = useMotionValue(0);
+  const controls = useAnimation();
+  const scrollContainerRef = useRef(null);
+  
+  // Reset y when sheet opens
+  useEffect(() => {
+    if (isOpen) {
+      y.set(0);
+      controls.set({ y: 0 });
+      setIsDragging(false);
+      setIsAtTop(true);
+    }
+  }, [isOpen, y, controls]);
+
+  // Track scroll position
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const scrollTop = scrollContainerRef.current.scrollTop;
+      setIsAtTop(scrollTop === 0);
+    }
+  };
+  
   if (!place) return null;
 
   const getWeatherRecommendation = (temp) => {
@@ -29,6 +54,72 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     window.open(`https://www.waze.com/ul?q=${query}`, '_blank');
   };
 
+  const handleDragStart = (event, info) => {
+    // Double-check we're at top before allowing drag
+    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0) {
+      setIsDragging(true);
+      controls.stop();
+    } else {
+      // Cancel drag if not at top
+      return false;
+    }
+  };
+
+  const handleDrag = (event, info) => {
+    // Double-check we're still at top during drag
+    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop > 0) {
+      y.set(0);
+      setIsDragging(false);
+      return;
+    }
+    
+    // Only allow dragging down (positive y values)
+    if (info.offset.y < 0) {
+      y.set(0);
+    } else {
+      y.set(info.offset.y);
+    }
+  };
+
+  const handleDragEnd = async (event, info) => {
+    // Don't handle drag end if not at top
+    if (!isAtTop) {
+      setIsDragging(false);
+      y.set(0);
+      return;
+    }
+
+    const { velocity } = info;
+    const threshold = 150; // Minimum drag distance to close
+    
+    // Get current y position
+    const currentY = y.get();
+    
+    // If dragged down significantly or with enough velocity, close the sheet
+    if (currentY > threshold || velocity.y > 500) {
+      setIsDragging(false);
+      // Animate to bottom and close
+      await controls.start({
+        y: window.innerHeight,
+        transition: { type: 'spring', damping: 30, stiffness: 300 }
+      });
+      onClose();
+      // Reset for next open
+      setTimeout(() => {
+        y.set(0);
+        controls.set({ y: 0 });
+      }, 300);
+    } else {
+      // Snap back to top
+      setIsDragging(false);
+      await controls.start({
+        y: 0,
+        transition: { type: 'spring', damping: 30, stiffness: 300 }
+      });
+      y.set(0);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -44,27 +135,40 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
 
           {/* Sheet */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto scrollbar-thin"
+            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 max-h-[90vh] overflow-hidden flex flex-col"
             initial={{ y: '100%' }}
-            animate={{ y: 0 }}
+            animate={isDragging ? undefined : controls}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            style={{ y: isDragging ? y : undefined }}
+            drag={isAtTop ? "y" : false}
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.2}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            dragMomentum={false}
           >
             {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
+            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
               <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
             </div>
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-4 left-4 btn-icon"
+              className="absolute top-4 left-4 btn-icon z-10"
             >
               <X size={24} />
             </button>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Scrollable Content */}
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto scrollbar-thin"
+              onScroll={handleScroll}
+            >
+              <div className="p-6">
               {/* Header Image */}
               <div className="relative h-48 rounded-2xl overflow-hidden mb-6 -mt-2 card">
                 <img 
@@ -201,6 +305,7 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
                   <MapPin size={20} />
                   <span>הצג במפה</span>
                 </button>
+              </div>
               </div>
             </div>
           </motion.div>
