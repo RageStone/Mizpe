@@ -16,15 +16,18 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
-  // Reset y when sheet opens
+  // Reset state when sheet opens/closes
   useEffect(() => {
-    if (isOpen) {
-      y.set(0);
-      controls.set({ y: 0 });
+    if (isOpen && mounted) {
       setIsDragging(false);
       setIsAtTop(true);
+      // Don't set y here - let the animation handle it
+    } else if (!isOpen) {
+      // Reset when closed
+      setIsDragging(false);
+      y.set(0);
     }
-  }, [isOpen, y, controls]);
+  }, [isOpen, mounted, y]);
 
   // Track scroll position
   const handleScroll = () => {
@@ -34,9 +37,10 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     }
   };
   
-  // Early return: Don't render on server side or without place data
-  if (!mounted || !place) return null;
+  // Don't render portal on server side
+  if (!mounted) return null;
 
+  // Helper functions (safe to call even if place is null)
   const getWeatherRecommendation = (temp) => {
     if (temp > 32) return { status: 'לא מומלץ', color: 'bg-red-500', icon: ThermometerSun };
     if (temp > 28) return { status: 'זהירות', color: 'bg-yellow-500', icon: Sun };
@@ -53,11 +57,13 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     }
   };
 
-  const recommendation = getWeatherRecommendation(place.weather.temperature);
-  const WeatherIcon = getWeatherIcon(place.weather.condition);
-  const RecIcon = recommendation.icon;
+  // Only compute these if place exists
+  const recommendation = place ? getWeatherRecommendation(place.weather.temperature) : null;
+  const WeatherIcon = place ? getWeatherIcon(place.weather.condition) : Sun;
+  const RecIcon = recommendation?.icon || Sun;
 
   const openNavigation = () => {
+    if (!place) return;
     const query = encodeURIComponent(`${place.name}, ${place.location}`);
     window.open(`https://www.waze.com/ul?q=${query}`, '_blank');
   };
@@ -128,12 +134,17 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     }
   };
 
-  const sheet = (
-    <AnimatePresence mode="wait">
-      {isOpen && (
+  // Portal content - always create portal when mounted, conditionally render content
+  // Ensure document.body exists before creating portal
+  if (!document?.body) return null;
+  
+  const portalContent = (
+    <AnimatePresence>
+      {isOpen && place && (
         <>
           {/* Backdrop */}
           <motion.div
+            key="backdrop"
             className="fixed inset-0 bg-black/50 z-[1040]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -144,9 +155,10 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
 
           {/* Sheet */}
           <motion.div
+            key="sheet"
             className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[1050] max-h-[90vh] overflow-hidden flex flex-col"
             initial={{ y: '100%' }}
-            animate={isDragging ? undefined : controls}
+            animate={isDragging ? undefined : { y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             style={isDragging ? { y } : undefined}
@@ -220,29 +232,31 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
               )}
 
               {/* Weather Widget - Enhanced */}
-              <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-2xl p-4 mb-6 glass card">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-white shadow-md">
-                      <WeatherIcon size={24} className="text-blue-600" />
+              {recommendation && (
+                <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-2xl p-4 mb-6 glass card">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-full bg-white shadow-md">
+                        <WeatherIcon size={24} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">טמפרטורה</p>
+                        <p className="text-2xl font-black">{place.weather.temperature}°C</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">טמפרטורה</p>
-                      <p className="text-2xl font-black">{place.weather.temperature}°C</p>
+                    <div className={`${recommendation.color} text-white badge flex items-center gap-2`}>
+                      <RecIcon size={20} />
+                      <span className="font-bold">{recommendation.status}</span>
                     </div>
                   </div>
-                  <div className={`${recommendation.color} text-white badge flex items-center gap-2`}>
-                    <RecIcon size={20} />
-                    <span className="font-bold">{recommendation.status}</span>
-                  </div>
+                  {place.weather.humidity !== undefined && (
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <span className="font-semibold">לחות:</span>
+                      <span className="font-medium">{place.weather.humidity}%</span>
+                    </div>
+                  )}
                 </div>
-                {place.weather.humidity !== undefined && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="font-semibold">לחות:</span>
-                    <span className="font-medium">{place.weather.humidity}%</span>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Priority 3: Parametric Ratings */}
               <div className="mb-6">
@@ -306,6 +320,7 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
                 {/* Secondary: Show on Map */}
                 <button
                   onClick={() => {
+                    if (!place) return;
                     const query = encodeURIComponent(`${place.name}, ${place.location}`);
                     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
                   }}
@@ -323,7 +338,7 @@ const PlaceDetailsSheet = ({ place, isOpen, onClose }) => {
     </AnimatePresence>
   );
 
-  return createPortal(sheet, document.body);
+  return createPortal(portalContent, document.body);
 };
 
 export default PlaceDetailsSheet;
